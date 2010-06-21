@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -19,7 +20,6 @@ void
 interpret (int ignore)
 {
   int file_pos = i;
-  int nest_count = 1;
   char instruction;
 
 
@@ -69,7 +69,6 @@ interpret (int ignore)
             {
               i++;
               interpret (0);
-              i--;
             }
           else
             {
@@ -81,7 +80,7 @@ interpret (int ignore)
           if (cells[cell])
             {
               lseek (file, file_pos, SEEK_SET);
-              i = file_pos;
+              i = file_pos-1;
             }
           else
             {
@@ -93,15 +92,9 @@ interpret (int ignore)
 }
 
 
-int
-main (void)
+void
+header (char *title)
 {
-  char *filename = getenv ("QUERY_STRING");
-  cells = malloc (30000);
-
-
-  cell = 0;
-
   printf ("Content-type: text/html\n\n");
 
 
@@ -109,32 +102,50 @@ main (void)
   printf ("\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
 
   printf ("<html xmlns=\"http://www.w3.org/1999/xhtml\">");
-  printf ("<head><title>%s</title>", filename);
+  printf ("<head><title>%s</title>", title);
 
   printf ("<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\" />");
   printf ("</head><body><pre>");
+}
 
-  if (!(file = open (filename, O_RDONLY)))
+
+void
+footer (int exit_status)
+{
+  printf ("</pre><hr />");
+  printf ("</body></html>");
+  exit (exit_status);
+}
+
+
+int
+main (void)
+{
+  char *filename = getenv ("QUERY_STRING");
+
+  cell = 0;
+
+  header (filename);
+
+  if ((file = open (filename, O_RDONLY)) == -1)
     {
-      printf ("No such file: %s\n");
-      goto end;
-      exit (-1);
+      printf ("No such file: %s\n", filename);
+      footer (-1);
     }
 
 
   if (!(cells = malloc (30000)))
     {
-      printf ("MEMORIES!");
-      goto end;
-      exit (-1);
+      printf ("NOT ENOUGH MEMORIES!");
+      footer (-1);
     }
 
+  memset (cells, 0, 30000);
 
   i = 0;
   interpret (0);
 
- end:
-  printf ("</pre></body></html>");
+  footer (0);
 
   return 0;
 }
