@@ -4,6 +4,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #include <ctype.h>
 #include <fcntl.h>
@@ -112,7 +113,7 @@ header (char *title)
   printf ("<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\" />");
 
   if (title)
-    printf ("</head><body><p>Interpreting file: %s</p><pre>\n\n", title);
+    printf ("</head><body><p>Interpreting file: /%s</p>", title);
   else
     printf ("</head><body><p>No file to interpret</p>");
 }
@@ -126,7 +127,7 @@ footer (int exit_status)
 
   printf ("<p><a href=\"http://validator.w3.org/check?uri=referer\">");
   printf ("<img src=\"http://www.w3.org/Icons/valid-xhtml10\"");
-  printf ("alt=\"Valid XHTML 1.0 Strict\" height=\"31\" width=\"88\" /></a></p>");
+  printf (" alt=\"Valid XHTML 1.0 Strict\" height=\"31\" width=\"88\" /></a></p>");
 
 
   printf ("</body></html>");
@@ -195,11 +196,53 @@ valid_filename (char *name)
 }
 
 
+void
+main_site (void)
+{
+  DIR *dp;
+  struct dirent *de;
+  char *dup_name, *tmp;
+
+  printf ("<p>Welcome to my Brainfuck online interpreter.</p>");
+
+  if (!(dp = opendir ("../brainfuck")))
+    {
+      printf ("<p>No available files</p>");
+      footer (EXIT_FAILURE);
+    }
+
+  printf ("<p>Available files in /brainfuck:</p>");
+
+  printf ("<ul>");
+  while ((de = readdir (dp)))
+    {
+      if (de->d_type == DT_UNKNOWN)
+        {
+          dup_name = tmp = strdup (de->d_name);
+          for (; *tmp != '.'; tmp++);
+          *tmp = '\0';
+          printf ("<li><a href=\"/cgi-bin/brainfuck.cgi?file=%s\">",
+                  dup_name);
+          printf ("%s</a></li>", de->d_name);
+        }
+    }
+
+  printf ("</ul>");
+}
+
+
 int
 main (void)
 {
   char *filename;
   char *get = getenv ("QUERY_STRING");
+
+  if (!*get)
+    {
+      header (NULL);
+      main_site ();
+      footer (EXIT_SUCCESS);
+    }
 
   cell = 0;
 
@@ -213,26 +256,28 @@ main (void)
 
   if (!filename)
     {
-      printf ("No such file\n");
+      printf ("<p>No such file\n</p>");
       footer (EXIT_FAILURE);
     }
 
   if ((file = open (filename, O_RDONLY)) == -1)
     {
-      printf ("No such file: /%s\n", filename+3);
+      printf ("<p>No such file: /%s</p>\n", filename+3);
       footer (EXIT_FAILURE);
     }
 
 
   if (!(cells = malloc (30000)))
     {
-      printf ("NOT ENOUGH MEMORIES!");
+      printf ("<p>NOT ENOUGH MEMORIES!</p>");
       footer (EXIT_FAILURE);
     }
 
   memset (cells, 0, 30000);
 
   i = 0;
+
+  printf ("<pre>\n\n");
   interpret (0);
 
   printf ("\n\n</pre><hr /><p><a href=\"/%s\">Source code</a></p>", filename+3);
