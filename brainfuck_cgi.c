@@ -16,7 +16,7 @@ int file;
 
 
 void
-interpret (void)
+interpret (int ignore)
 {
   int file_pos = i;
   int nest_count = 1;
@@ -25,6 +25,24 @@ interpret (void)
 
   for (; read (file, &instruction, 1); i++)
     {
+      if (ignore)
+        {
+          if (instruction == '[')
+            {
+              i++;
+              interpret (ignore);
+              continue;
+            }
+          else if (instruction == ']')
+            {
+              return;
+            }
+          else
+            {
+              continue;
+            }
+        }
+
       switch (instruction)
         {
         case '>':
@@ -50,20 +68,14 @@ interpret (void)
           if (cells[cell])
             {
               i++;
-              interpret ();
+              interpret (0);
+              i--;
             }
           else
-            for (; read (file, &instruction, 1); i++)
-              if (instruction == ']')
-                {
-                  if (!(--nest_count))
-                    {
-                      i++;
-                      break;
-                    }
-                }
-              else if (instruction == '[')
-                nest_count++;
+            {
+              i++;
+              interpret (1);
+            }
           break;
         case ']':
           if (cells[cell])
@@ -119,7 +131,7 @@ main (void)
 
 
   i = 0;
-  interpret ();
+  interpret (0);
 
  end:
   printf ("</pre></body></html>");
