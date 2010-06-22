@@ -114,8 +114,6 @@ header (char *title)
 
   if (title)
     printf ("</head><body><p>Interpreting file: /%s</p>", title);
-  else
-    printf ("</head><body><p>No file to interpret</p>");
 }
 
 
@@ -237,6 +235,8 @@ main (void)
   char *filename;
   char *get = getenv ("QUERY_STRING");
 
+  char byte;
+
   if (!*get)
     {
       header (NULL);
@@ -277,10 +277,19 @@ main (void)
 
   i = 0;
 
-  printf ("<pre>\n\n");
+  printf ("Output:<pre>\n\n");
   interpret (0);
 
-  printf ("\n\n</pre><hr /><p><a href=\"/%s\">Source code</a></p>", filename+3);
+  printf ("\n\n</pre><hr /><p><a href=\"/%s\">Source code</a>:</p>", filename+3);
+
+
+  lseek (file, 0, SEEK_SET);
+
+  printf ("<pre>");
+  while (read (file, &byte, 1))
+    fwrite (&byte, 1, 1, stdout);
+
+  printf ("</pre>");
 
   footer (EXIT_SUCCESS);
 
