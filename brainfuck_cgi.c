@@ -11,6 +11,8 @@
 
 #include <unistd.h>
 
+#include <cgi.h>
+
 
 unsigned char *cells;
 unsigned int cell;
@@ -97,9 +99,6 @@ interpret (int ignore)
 void
 header (char *title)
 {
-  printf ("Content-type: text/html\n\n");
-
-
   printf ("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"");
   printf ("\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
 
@@ -233,11 +232,17 @@ int
 main (void)
 {
   char *filename;
-  char *get = getenv ("QUERY_STRING");
 
   char byte;
 
-  if (!*get)
+  s_cgi *cgi;
+
+
+  cgi = cgiInit ();
+
+  cgiHeader ();
+
+  if (!(filename = cgiGetValue (cgi, "file")))
     {
       header (NULL);
       main_site ();
@@ -246,7 +251,6 @@ main (void)
 
   cell = 0;
 
-  filename = extract_get_var (get, "file");
   filename = (valid_filename (filename));
 
   if (filename)
