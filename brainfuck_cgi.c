@@ -1,3 +1,6 @@
+/* Copyright (C) 2010 Jon Anders Skorpen
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

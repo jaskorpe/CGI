@@ -1,1 +1,11 @@
-CGI Brainfuck interpreter in C. No support for input yet.
+Copyright (C) 2010 Jon Anders Skorpen
+
+CGI Brainfuck interpreter in C
+
+Filename in get variable file, and input to brainfuck in get variable
+input.
+
+TODO:
+Run code from unsecure sources
+Quine detection
+WEB2.0 :p
