@@ -13,10 +13,23 @@
 
 #include <cgi.h>
 
+#include <errno.h>
+
+
+void interpret (int ignore);
+void header (char *title);
+void footer (int exit_status);
+char *valid_filename (char *name);
+void main_site (void);
+
+
+char *input;
+int input_len;
 
 unsigned char *cells;
 unsigned int cell;
 int i;
+
 int file;
 
 
@@ -67,6 +80,13 @@ interpret (int ignore)
           printf ("%c", cells[cell]);
           break;
         case ',':
+          if (input_len--)
+            cells[cell] = *(input++);
+          else
+            {
+              printf ("\n\n</pre><hr /><p>Trouble reading from input</p>");
+              footer (EXIT_FAILURE);
+            }
           break;
         case '[':
           if (cells[cell])
@@ -131,41 +151,6 @@ footer (int exit_status)
   exit (exit_status);
 }
 
-
-char *
-extract_get_var (char *get, char *name)
-{
-  char *value = NULL;
-  char *tmp;
-
-  int i;
-
-  if (!(tmp = strstr (get, name)))
-    return NULL;
-
-  tmp += strlen (name);
-
-  if (*tmp != '=')
-    return NULL;
-
-  for (i = 0; *tmp != '&' && *tmp != '\0'; i++)
-    tmp++;
-
-  value = malloc (i);
-
-  memcpy (value, tmp-(i-1), i);
-  value[i-1] = '\0';
-
-  if (!*value)
-    {
-      free (value);
-      value = NULL;
-    }
-
-  return value;
-}
-
-
 char *
 valid_filename (char *name)
 {
@@ -187,6 +172,10 @@ valid_filename (char *name)
     }
 
   valid = malloc (strlen (name) + 16);
+
+  if (!valid)
+    return NULL;
+
   sprintf (valid, "../brainfuck/%s.b", name);
 
   return valid;
@@ -279,9 +268,14 @@ main (void)
 
   memset (cells, 0, 30000);
 
+  if (input = cgiGetValue (cgi, "input"))
+    input_len = strlen (input);
+  else
+    input_len = 0;
+
   i = 0;
 
-  printf ("Output:<pre>\n\n");
+  printf ("<p>Output:</p><pre>\n\n");
   interpret (0);
 
   printf ("\n\n</pre><hr /><p><a href=\"/%s\">Source code</a>:</p>", filename+3);
