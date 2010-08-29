@@ -192,6 +192,13 @@ footer (int exit_status)
 
 
   printf ("</body></html>");
+
+  if (file)
+    {
+      munmap (code_start, code_len);
+      close (file);
+    }
+
   exit (exit_status);
 }
 
@@ -374,9 +381,6 @@ main (void)
   interpret (0);
 
   printf ("</pre>\n\n");
-
-  if (filename)
-    munmap (code, code_len);
 
   footer (EXIT_SUCCESS);
 
