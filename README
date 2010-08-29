@@ -2,9 +2,6 @@ Copyright (C) 2010 Jon Anders Skorpen
 
 CGI Brainfuck interpreter in C
 
-Filename in get variable file, and input to brainfuck in get variable
-input.
-
 How to use:
 Compile by doing gcc -o brainfuck.cgi brainfuck_cgi.c -lcgi
 Deploy
@@ -14,6 +11,10 @@ and -static also.
 
 
 TODO:
-Run code from unsecure sources
 Quine detection
 WEB2.0 :p
+Clean up some messy code
+
+TODONE:
+Run code from unsecure sources
+Input
