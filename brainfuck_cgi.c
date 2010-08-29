@@ -9,6 +9,8 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+#include <sys/time.h>
+
 #include <ctype.h>
 #include <fcntl.h>
 
@@ -18,6 +20,8 @@
 
 #include <errno.h>
 
+#include <sys/mman.h>
+
 
 void interpret (int ignore);
 void header (char *title);
@@ -26,11 +30,21 @@ char *valid_filename (char *name);
 void main_site (void);
 
 
+struct timeval stop_time;
+struct timeval start_time;
+struct timeval offset = {5, 0};
+
 char *input;
 int input_len;
 
 unsigned char *cells;
 unsigned int cell;
+
+char *code = 0;
+char *code_start;
+char *code_end;
+int code_len;
+
 int i;
 
 int file;
@@ -39,12 +53,23 @@ int file;
 void
 interpret (int ignore)
 {
-  int file_pos = i;
+  int code_pos = i;
   char instruction;
 
 
-  for (; read (file, &instruction, 1); i++)
+  for (; code < code_end; i++)
     {
+
+      gettimeofday (&start_time, NULL);
+
+      if (timercmp (&start_time, &stop_time, >))
+        {
+          printf ("</pre><p>Timeout!</p>");
+          footer (EXIT_FAILURE);
+        }
+
+      instruction = *(code++);
+
       if (ignore)
         {
           if (instruction == '[')
@@ -106,8 +131,8 @@ interpret (int ignore)
         case ']':
           if (cells[cell])
             {
-              lseek (file, file_pos, SEEK_SET);
-              i = file_pos-1;
+              code = code_start+code_pos;
+              i = code_pos-1;
             }
           else
             {
@@ -128,14 +153,12 @@ header (char *title)
   printf ("<html xmlns=\"http://www.w3.org/1999/xhtml\">");
 
   if (title)
-    printf ("<head><title>/%s</title>", title);
+    printf ("<head><title>%s</title>", title);
   else
     printf ("<head><title>Brainfuck interpreter</title>");
 
-  printf ("<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\" />");
-
-  if (title)
-    printf ("</head><body><p>Interpreting file: /%s</p>", title);
+  printf ("<meta http-equiv=\"content-type\" ");
+  printf ("content=\"text/html;charset=utf-8\" />");
 }
 
 
@@ -147,7 +170,8 @@ footer (int exit_status)
 
   printf ("<p><a href=\"http://validator.w3.org/check?uri=referer\">");
   printf ("<img src=\"http://www.w3.org/Icons/valid-xhtml10\"");
-  printf (" alt=\"Valid XHTML 1.0 Strict\" height=\"31\" width=\"88\" /></a></p>");
+  printf (" alt=\"Valid XHTML 1.0 Strict\" height=\"31\" width=\"88\" ");
+  printf ("/></a></p>");
 
 
   printf ("</body></html>");
@@ -200,9 +224,9 @@ main_site (void)
       footer (EXIT_FAILURE);
     }
 
-  printf ("<p>Available files in /brainfuck:</p>");
+  printf ("<p>Available files in /brainfuck:</p>\n");
 
-  printf ("<ul>");
+  printf ("<form action=\"brainfuck.cgi\" method=\"post\">\n");
   while ((de = readdir (dp)))
     {
       if (de->d_type == DT_UNKNOWN)
@@ -210,13 +234,21 @@ main_site (void)
           dup_name = tmp = strdup (de->d_name);
           for (; *tmp != '.'; tmp++);
           *tmp = '\0';
-          printf ("<li><a href=\"/cgi-bin/brainfuck.cgi?file=%s\">",
-                  dup_name);
-          printf ("%s</a></li>", de->d_name);
+          printf ("<input type=\"radio\" name=\"file\" value=\"%s\"/>%s<br />\n",
+                  dup_name, de->d_name);
         }
     }
 
-  printf ("</ul>");
+  printf ("<br />User supplied code (file selection takes precedence):<br />\n");
+  printf ("<textarea name=\"code\">+[-]</textarea><br />\n");
+
+  printf ("<br />User supplied input:<br />");
+  printf ("<input type=\"text\" name=\"input\" /><br />\n");
+
+  printf ("<input type=\"submit\" value=\"Send\" /><br />\n");
+  printf ("<input type=\"reset\" value=\"Clear\" /><br />\n");
+
+  printf ("</form>\n");
 }
 
 
@@ -225,43 +257,61 @@ main (void)
 {
   char *filename;
 
-  char byte;
-
   s_cgi *cgi;
 
+  struct stat sb;
 
   cgi = cgiInit ();
 
   cgiHeader ();
 
-  if (!(filename = cgiGetValue (cgi, "file")))
+  if ((filename = cgiGetValue (cgi, "file")))
+    header (filename);
+  else if ((code = cgiGetValue (cgi, "code")))
+    header ("User supplied code");
+  else
     {
-      header (NULL);
+      header ("Brainfuck interpreter");
       main_site ();
       footer (EXIT_SUCCESS);
     }
 
-  cell = 0;
-
   filename = (valid_filename (filename));
 
   if (filename)
-    header (filename+3);
-  else
-    header (NULL);
-
-  if (!filename)
     {
-      printf ("<p>No such file\n</p>");
+      if ((file = open (filename, O_RDONLY)) == -1)
+        {
+          printf ("<p>No such file: /%s</p>\n", filename+3);
+          footer (EXIT_FAILURE);
+        }
+      if (fstat (file, &sb) == -1)
+        {
+          printf ("<p>Problem getting file lenght</p>\n");
+          footer (EXIT_FAILURE);
+        }
+
+      code_len = sb.st_size;
+
+      if ((code = mmap (NULL, code_len, PROT_READ, MAP_PRIVATE, file, 0))
+          == MAP_FAILED)
+        {
+          printf ("<p>Problem memory mapping file</p>\n");
+          footer (EXIT_FAILURE);
+        }
+    }
+  else if (code)
+    code_len = strlen (code);
+
+
+  if (!code)
+    {
+      printf ("<p>No code to interpret\n</p>");
       footer (EXIT_FAILURE);
     }
 
-  if ((file = open (filename, O_RDONLY)) == -1)
-    {
-      printf ("<p>No such file: /%s</p>\n", filename+3);
-      footer (EXIT_FAILURE);
-    }
-
+  code_start = code;
+  code_end = code + code_len;
 
   if (!(cells = malloc (30000)))
     {
@@ -269,9 +319,13 @@ main (void)
       footer (EXIT_FAILURE);
     }
 
+  gettimeofday (&start_time, NULL);
+  timeradd (&start_time, &offset, &stop_time);
+
+  cell = 0;
   memset (cells, 0, 30000);
 
-  if (input = cgiGetValue (cgi, "input"))
+  if ((input = cgiGetValue (cgi, "input")))
     input_len = strlen (input);
   else
     input_len = 0;
@@ -281,16 +335,21 @@ main (void)
   printf ("<p>Output:</p><pre>\n\n");
   interpret (0);
 
-  printf ("\n\n</pre><hr /><p><a href=\"/%s\">Source code</a>:</p>", filename+3);
-
-
-  lseek (file, 0, SEEK_SET);
+  if (filename)
+    printf ("\n\n</pre><hr /><p><a href=\"/%s\">Source code</a>:</p>",
+            filename+3);
+  else
+    printf ("\n\n</pre><hr /><p>Source code</a>:</p>");
 
   printf ("<pre>");
-  while (read (file, &byte, 1))
-    fwrite (&byte, 1, 1, stdout);
+  code = code_start;
+  while (code < code_end)
+    printf ("%c", *code++);
 
   printf ("</pre>");
+
+  if (filename)
+    munmap (code, code_len);
 
   footer (EXIT_SUCCESS);
 
