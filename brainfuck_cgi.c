@@ -1,5 +1,18 @@
 /* Copyright (C) 2010 Jon Anders Skorpen
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -159,6 +172,7 @@ header (char *title)
 
   printf ("<meta http-equiv=\"content-type\" ");
   printf ("content=\"text/html;charset=utf-8\" />");
+  printf ("</head><body>");
 }
 
 
@@ -167,6 +181,9 @@ footer (int exit_status)
 {
   printf ("<hr /><p>Brainfuck interpreter completely written in C</p>");
   printf ("<p>Copyright (C) 2010 Jon Anders Skorpen</p><hr />");
+
+  printf ("<p>Get source code <a href=\"http://github.com/jaskorpe/CGI\">");
+  printf ("here</a>.</p><hr /><p>Version: 1.0</p><hr />\n");
 
   printf ("<p><a href=\"http://validator.w3.org/check?uri=referer\">");
   printf ("<img src=\"http://www.w3.org/Icons/valid-xhtml10\"");
@@ -226,7 +243,7 @@ main_site (void)
 
   printf ("<p>Available files in /brainfuck:</p>\n");
 
-  printf ("<form action=\"brainfuck.cgi\" method=\"post\">\n");
+  printf ("<form action=\"brainfuck.cgi\" method=\"post\"><p>\n");
   while ((de = readdir (dp)))
     {
       if (de->d_type == DT_UNKNOWN)
@@ -234,13 +251,15 @@ main_site (void)
           dup_name = tmp = strdup (de->d_name);
           for (; *tmp != '.'; tmp++);
           *tmp = '\0';
-          printf ("<input type=\"radio\" name=\"file\" value=\"%s\"/>%s<br />\n",
-                  dup_name, de->d_name);
+          printf ("<label>%s<input type=\"radio\" name=\"file\" value=\"%s\"/>",
+                  de->d_name, dup_name);
+          printf ("</label><br />\n");
         }
     }
 
-  printf ("<br />User supplied code (file selection takes precedence):<br />\n");
-  printf ("<textarea name=\"code\">+[-]</textarea><br />\n");
+  printf ("<br />User supplied code (file selection takes precedence):");
+  printf ("<br />\n<textarea name=\"code\" rows=\"10\" cols=\"50\">+[,.]");
+  printf ("</textarea><br />\n");
 
   printf ("<br />User supplied input:<br />");
   printf ("<input type=\"text\" name=\"input\" /><br />\n");
@@ -248,7 +267,7 @@ main_site (void)
   printf ("<input type=\"submit\" value=\"Send\" /><br />\n");
   printf ("<input type=\"reset\" value=\"Clear\" /><br />\n");
 
-  printf ("</form>\n");
+  printf ("</p></form>\n");
 }
 
 
@@ -330,23 +349,31 @@ main (void)
   else
     input_len = 0;
 
-  i = 0;
-
-  printf ("<p>Output:</p><pre>\n\n");
-  interpret (0);
-
   if (filename)
-    printf ("\n\n</pre><hr /><p><a href=\"/%s\">Source code</a>:</p>",
+    printf ("\n\n<p><a href=\"/%s\">Source code</a>:</p>",
             filename+3);
   else
-    printf ("\n\n</pre><hr /><p>Source code</a>:</p>");
+    printf ("\n\n</pre><p>Source code</a>:</p>");
 
   printf ("<pre>");
   code = code_start;
   while (code < code_end)
     printf ("%c", *code++);
 
-  printf ("</pre>");
+  code = code_start;
+
+  printf ("</pre><hr />");
+
+  if (input)
+    printf ("Input:<pre>%s</pre><hr />", input);
+
+
+  i = 0;
+
+  printf ("<p>Output:</p><pre>\n\n");
+  interpret (0);
+
+  printf ("</pre>\n\n");
 
   if (filename)
     munmap (code, code_len);
