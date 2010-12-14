@@ -64,6 +64,24 @@ int file;
 
 
 void
+print_cell (char c)
+{
+  switch (c)
+    {
+    case '<':
+      printf ("&lt;");
+      break;
+    case '&':
+      printf ("&amp;");
+      break;
+    default:
+      printf ("%c", c);
+      break;
+    }
+}
+
+
+void
 interpret (int ignore)
 {
   int code_pos = i;
@@ -118,7 +136,7 @@ interpret (int ignore)
           cells[cell]--;
           break;
         case '.':
-          printf ("%c", cells[cell]);
+          print_cell (cells[cell]);
           break;
         case ',':
           if (input_len--)

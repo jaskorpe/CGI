@@ -7,13 +7,19 @@ Compile by doing gcc -o brainfuck.cgi brainfuck_cgi.c -lcgi
 Deploy
 
 If you have libcgi in a strange location you might have to use -L, -I
-and -static also.
+and/or -static also.
+
+
+Licence:
+AGPL v3
 
 
 TODO:
 Quine detection
 WEB2.0 :p
 Clean up some messy code
+Cloud computing API :p (not really)
+
 
 TODONE:
 Run code from unsecure sources
