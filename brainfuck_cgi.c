@@ -201,7 +201,7 @@ footer (int exit_status)
   printf ("<p>Copyright (C) 2010 Jon Anders Skorpen</p><hr />");
 
   printf ("<p>Get source code <a href=\"http://github.com/jaskorpe/CGI\">");
-  printf ("here</a>.</p><hr /><p>Version: 1.0</p><hr />\n");
+  printf ("here</a>.</p><hr /><p>Version: 1.1</p><hr />\n");
 
   printf ("<p><a href=\"http://validator.w3.org/check?uri=referer\">");
   printf ("<img src=\"http://www.w3.org/Icons/valid-xhtml10\"");
