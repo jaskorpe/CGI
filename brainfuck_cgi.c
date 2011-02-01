@@ -260,29 +260,30 @@ main_site (void)
 
   printf ("<p>Welcome to my Brainfuck online interpreter.</p>");
 
-  if (!(dp = opendir ("../brainfuck")))
+  if ((dp = opendir ("../brainfuck")))
     {
-      printf ("<p>No available files</p>");
-      footer (EXIT_FAILURE);
-    }
+      printf ("<p>Available files in /brainfuck:</p>\n");
 
-  printf ("<p>Available files in /brainfuck:</p>\n");
-
-  printf ("<form action=\"brainfuck.cgi\" method=\"post\"><p>\n");
-  while ((de = readdir (dp)))
-    {
-      if (de->d_type == DT_UNKNOWN)
+      printf ("<form action=\"brainfuck.cgi\" method=\"post\"><p>\n");
+      while ((de = readdir (dp)))
         {
-          dup_name = tmp = strdup (de->d_name);
-          for (; *tmp != '.'; tmp++);
-          *tmp = '\0';
-          printf ("<label>%s<input type=\"radio\" name=\"file\" value=\"%s\"/>",
-                  de->d_name, dup_name);
-          printf ("</label><br />\n");
+          if (de->d_type == DT_UNKNOWN)
+            {
+              dup_name = tmp = strdup (de->d_name);
+              for (; *tmp != '.'; tmp++);
+              *tmp = '\0';
+              printf ("<label>%s<input type=\"radio\" name=\"file\" value=\"%s\"/>",
+                      de->d_name, dup_name);
+              printf ("</label><br />\n");
+            }
         }
+      printf ("<br />User supplied code (file selection takes precedence):");
+    }
+  else
+    {
+      printf ("<form action=\"brainfuck.cgi\" method=\"post\"><p>\n");
     }
 
-  printf ("<br />User supplied code (file selection takes precedence):");
   printf ("<br />\n<textarea name=\"code\" rows=\"10\" cols=\"50\">+[,.]");
   printf ("</textarea><br />\n");
 
