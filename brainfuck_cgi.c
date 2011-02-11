@@ -189,6 +189,7 @@ header (char *title)
 
   printf ("<meta http-equiv=\"content-type\"\n"
           "\tcontent=\"text/html;charset=utf-8\" />\n"
+          "<script type=\"text/javascript\" src=\"/functions.js\"></script>\n"
           "</head><body>\n");
 }
 
@@ -264,7 +265,8 @@ main_site (void)
         {
           if (de->d_type == DT_REG)
             {
-              printf ("<a href=\"/brainfuck/%s\">"
+              printf ("<a href=\"/brainfuck/%s\" "
+                      "onClick=\"loadBf('%s'); return false;\">"
                       "%s</a><br />\n",
                       de->d_name, de->d_name, de->d_name);
             }
