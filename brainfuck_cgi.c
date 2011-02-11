@@ -178,38 +178,36 @@ interpret (int ignore)
 void
 header (char *title)
 {
-  printf ("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"");
-  printf ("\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
-
-  printf ("<html xmlns=\"http://www.w3.org/1999/xhtml\">");
+  printf ("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"
+          "\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
+          "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n");
 
   if (title)
-    printf ("<head><title>%s</title>", title);
+    printf ("<head><title>%s</title>\n", title);
   else
-    printf ("<head><title>Brainfuck interpreter</title>");
+    printf ("<head><title>Brainfuck interpreter</title>\n");
 
-  printf ("<meta http-equiv=\"content-type\" ");
-  printf ("content=\"text/html;charset=utf-8\" />");
-  printf ("</head><body>");
+  printf ("<meta http-equiv=\"content-type\"\n"
+          "\tcontent=\"text/html;charset=utf-8\" />\n"
+          "</head><body>\n");
 }
 
 
 void
 footer (int exit_status)
 {
-  printf ("<hr /><p>Brainfuck interpreter completely written in C</p>");
-  printf ("<p>Copyright (C) 2010 Jon Anders Skorpen</p><hr />");
+  printf ("<hr /><p>Brainfuck interpreter completely written in C</p>\n"
+          "<p>Copyright (C) 2010 Jon Anders Skorpen</p><hr />\n"
 
-  printf ("<p>Get source code <a href=\"http://github.com/jaskorpe/CGI\">");
-  printf ("here</a>.</p><hr /><p>Version: 1.1</p><hr />\n");
+          "<p>Get source code <a href=\"http://github.com/jaskorpe/CGI\">\n"
+          "here</a>.</p><hr /><p>Version: 1.1</p><hr />\n"
 
-  printf ("<p><a href=\"http://validator.w3.org/check?uri=referer\">");
-  printf ("<img src=\"http://www.w3.org/Icons/valid-xhtml10\"");
-  printf (" alt=\"Valid XHTML 1.0 Strict\" height=\"31\" width=\"88\" ");
-  printf ("/></a></p>");
+          "<p><a href=\"http://validator.w3.org/check?uri=referer\">\n"
+          "<img src=\"http://www.w3.org/Icons/valid-xhtml10\"\n"
+          "\talt=\"Valid XHTML 1.0 Strict\" height=\"31\" width=\"88\""
+          " /></a></p>"
 
-
-  printf ("</body></html>");
+          "</body></html>");
 
   if (file)
     {
@@ -256,44 +254,33 @@ main_site (void)
 {
   DIR *dp;
   struct dirent *de;
-  char *dup_name, *tmp;
 
   printf ("<p>Welcome to my Brainfuck online interpreter.</p>");
 
   if ((dp = opendir ("../brainfuck")))
     {
-      printf ("<p>Available files in /brainfuck:</p>\n");
-
-      printf ("<form action=\"brainfuck.cgi\" method=\"post\"><p>\n");
+      printf ("<p>Available files in /brainfuck:<br />\n");
       while ((de = readdir (dp)))
         {
-          if (de->d_type == DT_UNKNOWN)
+          if (de->d_type == DT_REG)
             {
-              dup_name = tmp = strdup (de->d_name);
-              for (; *tmp != '.'; tmp++);
-              *tmp = '\0';
-              printf ("<label>%s<input type=\"radio\" name=\"file\" value=\"%s\"/>",
-                      de->d_name, dup_name);
-              printf ("</label><br />\n");
+              printf ("<a href=\"/brainfuck/%s\">"
+                      "%s</a><br />\n",
+                      de->d_name, de->d_name, de->d_name);
             }
         }
-      printf ("<br />User supplied code (file selection takes precedence):");
-    }
-  else
-    {
-      printf ("<form action=\"brainfuck.cgi\" method=\"post\"><p>\n");
     }
 
-  printf ("<br />\n<textarea name=\"code\" rows=\"10\" cols=\"50\">+[,.]");
-  printf ("</textarea><br />\n");
+  printf ("</p><form action=\"brainfuck.cgi\" name=\"bfForm\" "
+          "method=\"post\"><p>\n"
+          "<br />\n<textarea name=\"code\" "
+          "rows=\"25\" cols=\"60\">+[,.]"
+          "</textarea><br />\n<br />User supplied input:<br />"
+          "<input type=\"text\" name=\"input\" /><br />\n"
+          "<input type=\"submit\" value=\"Send\" /><br />\n"
+          "<input type=\"reset\" value=\"Clear\" /><br />\n"
 
-  printf ("<br />User supplied input:<br />");
-  printf ("<input type=\"text\" name=\"input\" /><br />\n");
-
-  printf ("<input type=\"submit\" value=\"Send\" /><br />\n");
-  printf ("<input type=\"reset\" value=\"Clear\" /><br />\n");
-
-  printf ("</p></form>\n");
+          "</p></form>\n");
 }
 
 
