@@ -60,6 +60,8 @@ int code_len;
 
 int i;
 
+char *tmp;
+
 int file;
 
 
@@ -377,10 +379,13 @@ main (void)
 
   code = code_start;
 
-  printf ("</pre><hr />");
+  printf ("</pre><hr />\nInput:<pre>\n");
 
-  if (input)
-    printf ("Input:<pre>%s</pre><hr />", input);
+  tmp = input;
+  while (*tmp)
+    print_cell (*tmp++);
+
+  printf ("</pre><hr />");
 
 
   i = 0;
