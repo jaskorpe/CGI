@@ -47,6 +47,9 @@ static int file;
 static char *input;
 static int input_len;
 
+
+static char *tmp;
+
 static int code_len = 0;
 static char *code = 0;
 static char *code_start, *code_end;
@@ -159,16 +162,16 @@ main_site (void)
           if (de->d_type == DT_REG)
             {
               printf ("<a href=\"/brainfuck/%s\" "
-                      "onClick=\"loadBf('%s'); return false;\">"
+                      "onclick=\"loadBf('%s'); return false;\">"
                       "%s</a><br />\n",
                       de->d_name, de->d_name, de->d_name);
             }
         }
     }
 
-  printf ("</p><form action=\"brainfuck.cgi\" name=\"bfForm\" "
+  printf ("</p><form action=\"brainfuck.cgi\" id=\"bfForm\" "
           "method=\"post\"><p>\n"
-          "<br />\n<textarea name=\"code\" "
+          "<br />\n<textarea name=\"code\" id=\"bfcode\" "
           "rows=\"25\" cols=\"60\">+[,.]"
           "</textarea><br />\n<br />User supplied input:<br />"
           "<input type=\"text\" name=\"input\" /><br />\n"
@@ -268,8 +271,11 @@ main (void)
 
   printf ("</pre><hr />");
 
-  if (input)
-    printf ("Input:<pre>%s</pre><hr />", input);
+  tmp = input;
+  while (tmp && *tmp)
+    print_cell (*tmp++);
+
+  printf ("</pre><hr />");
 
 
   printf ("<p>Output:</p><pre>\n\n");
