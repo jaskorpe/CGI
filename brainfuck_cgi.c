@@ -22,9 +22,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-#include <sys/time.h>
 
-#include <ctype.h>
 #include <fcntl.h>
 
 #include <unistd.h>
@@ -35,33 +33,23 @@
 
 #include <sys/mman.h>
 
+#include "brainfuck_interpreter.h"
 
-void interpret (int ignore);
-void header (char *title);
-void footer (int exit_status);
-char *valid_filename (char *name);
-void main_site (void);
+static void header (char *title);
+static void footer (int exit_status);
+static char *valid_filename (char *name);
+static void main_site (void);
 
 
-struct timeval stop_time;
-struct timeval start_time;
-struct timeval offset = {5, 0};
 
-char *input;
-int input_len;
+static int file;
 
-unsigned char *cells;
-unsigned int cell;
+static char *input;
+static int input_len;
 
-char *code = 0;
-char *code_start;
-char *code_end;
-int code_len;
-
-int i;
-
-int file;
-
+static int code_len = 0;
+static char *code = 0;
+static char *code_start, *code_end;
 
 void
 print_cell (char c)
@@ -79,101 +67,6 @@ print_cell (char c)
       break;
     }
 }
-
-
-void
-interpret (int ignore)
-{
-  int code_pos = i;
-  char instruction;
-
-
-  for (; code < code_end; i++)
-    {
-
-      gettimeofday (&start_time, NULL);
-
-      if (timercmp (&start_time, &stop_time, >))
-        {
-          printf ("</pre><p>Timeout!</p>");
-          footer (EXIT_FAILURE);
-        }
-
-      instruction = *(code++);
-
-      if (ignore)
-        {
-          if (instruction == '[')
-            {
-              i++;
-              interpret (ignore);
-              continue;
-            }
-          else if (instruction == ']')
-            {
-              return;
-            }
-          else
-            {
-              continue;
-            }
-        }
-
-      switch (instruction)
-        {
-        case '>':
-          if (cell++ == 29999)
-            cell = 0;
-          break;
-        case '<':
-          if (cell-- == 0)
-            cell = 29999;
-          break;
-        case '+':
-          cells[cell]++;
-          break;
-        case '-':
-          cells[cell]--;
-          break;
-        case '.':
-          print_cell (cells[cell]);
-          break;
-        case ',':
-          if (input_len--)
-            cells[cell] = *(input++);
-          else
-            {
-              printf ("\n\n</pre><hr /><p>Trouble reading from input</p>");
-              footer (EXIT_FAILURE);
-            }
-          break;
-        case '[':
-          if (cells[cell])
-            {
-              i++;
-              interpret (0);
-            }
-          else
-            {
-              i++;
-              interpret (1);
-            }
-          break;
-        case ']':
-          if (cells[cell])
-            {
-              code = code_start+code_pos;
-              i = code_pos-1;
-            }
-          else
-            {
-              return;
-            }
-          break;
-        }
-    }
-}
-
 
 void
 header (char *title)
@@ -337,45 +230,41 @@ main (void)
   else if (code)
     code_len = strlen (code);
 
-
-  if (!code)
-    {
-      printf ("<p>No code to interpret\n</p>");
-      footer (EXIT_FAILURE);
-    }
-
   code_start = code;
   code_end = code + code_len;
-
-  if (!(cells = malloc (30000)))
-    {
-      printf ("<p>NOT ENOUGH MEMORIES!</p>");
-      footer (EXIT_FAILURE);
-    }
-
-  gettimeofday (&start_time, NULL);
-  timeradd (&start_time, &offset, &stop_time);
-
-  cell = 0;
-  memset (cells, 0, 30000);
 
   if ((input = cgiGetValue (cgi, "input")))
     input_len = strlen (input);
   else
     input_len = 0;
 
+
+  if (init_interpreter (code_len, code, input_len, input, print_cell) == -1)
+    {
+      if (errno == ENOMEM)
+        printf ("<p>NOT ENOUGH MEMORIES!</p>");
+      else if (errno == EIO)
+        printf ("<p>No code to interpret\n</p>");
+      else
+        printf ("<p>Some undefined error occured\n</p>");
+
+      footer (EXIT_FAILURE);
+    }
+
+
+
   if (filename)
     printf ("\n\n<p><a href=\"/%s\">Source code</a>:</p>",
             filename+3);
   else
-    printf ("\n\n</pre><p>Source code</a>:</p>");
+    printf ("\n\n<p>Source code</a>:</p>");
 
   printf ("<pre>");
-  code = code_start;
+
+  code_start = code;
+  code_end = code + code_len;
   while (code < code_end)
     printf ("%c", *code++);
-
-  code = code_start;
 
   printf ("</pre><hr />");
 
@@ -383,11 +272,18 @@ main (void)
     printf ("Input:<pre>%s</pre><hr />", input);
 
 
-  i = 0;
-
   printf ("<p>Output:</p><pre>\n\n");
-  interpret (0);
 
+  if (interpret (0) == -1)
+    {
+      if (errno == ETIME)
+        printf ("</pre>\n<p>Timeout!</p>");
+      else if (errno == EIO)
+        printf ("\n\n</pre>\n<hr /><p>Trouble reading from input</p>");
+      else
+        printf ("\n</pre>\n<hr /><p>Undefined error</p>");
+      footer (EXIT_FAILURE);
+    }
   printf ("</pre>\n\n");
 
   footer (EXIT_SUCCESS);
