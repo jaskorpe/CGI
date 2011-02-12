@@ -166,4 +166,6 @@ interpret (int ignore)
           break;
         }
     }
+
+  return 0;
 }
