@@ -98,7 +98,7 @@ footer (int exit_status)
           "<p>Copyright (C) 2010 Jon Anders Skorpen</p><hr />\n"
 
           "<p>Get source code <a href=\"http://github.com/jaskorpe/CGI\">\n"
-          "here</a>.</p><hr /><p>Version: 1.1</p><hr />\n"
+          "here</a>.</p><hr /><p>Version: 2.0WE (Web edition)</p><hr />\n"
 
           "<p><a href=\"http://validator.w3.org/check?uri=referer\">\n"
           "<img src=\"http://www.w3.org/Icons/valid-xhtml10\"\n"
