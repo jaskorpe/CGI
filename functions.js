@@ -10,7 +10,8 @@ function loadBf(filename)
     {
         if (xmlhttp.readyState == 4)
             {
-                document.bfForm.code.value = xmlhttp.responseText;
+                code = document.getElementById ("bfcode");
+                code.value = xmlhttp.responseText;
             }
     }
 }
