@@ -268,16 +268,16 @@ main_site (void)
           if (de->d_type == DT_REG)
             {
               printf ("<a href=\"/brainfuck/%s\" "
-                      "onClick=\"loadBf('%s'); return false;\">"
+                      "onclick=\"loadBf('%s'); return false;\">"
                       "%s</a><br />\n",
                       de->d_name, de->d_name, de->d_name);
             }
         }
     }
 
-  printf ("</p><form action=\"brainfuck.cgi\" name=\"bfForm\" "
+  printf ("</p><form action=\"brainfuck.cgi\" id=\"bfForm\" "
           "method=\"post\"><p>\n"
-          "<br />\n<textarea name=\"code\" "
+          "<br />\n<textarea name=\"code\" id=\"bfcode\" "
           "rows=\"25\" cols=\"60\">+[,.]"
           "</textarea><br />\n<br />User supplied input:<br />"
           "<input type=\"text\" name=\"input\" /><br />\n"
@@ -382,7 +382,7 @@ main (void)
   printf ("</pre><hr />\nInput:<pre>\n");
 
   tmp = input;
-  while (*tmp)
+  while (tmp && *tmp)
     print_cell (*tmp++);
 
   printf ("</pre><hr />");
