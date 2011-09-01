@@ -86,7 +86,8 @@ header (char *title)
 
   printf ("<meta http-equiv=\"content-type\"\n"
           "\tcontent=\"text/html;charset=utf-8\" />\n"
-          "<script type=\"text/javascript\" src=\"/functions.js\"></script>\n"
+          "<script type=\"text/javascript\"\n"
+          "\tsrc=\"http://mindmutation.net/functions.js\"></script>\n"
           "</head><body>\n");
 }
 
@@ -268,7 +269,7 @@ main (void)
   code_start = code;
   code_end = code + code_len;
   while (code < code_end)
-    printf ("%c", *code++);
+    print_cell (*code++);
 
   printf ("</pre><hr />");
 
